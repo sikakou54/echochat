@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EchoChat - あなたの言葉が、世界のどこかに届く</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        /* ヒーローセクション */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        /* 地球儀キャンバス */
+        #globe-canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0.3;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+        }
+
+        .logo {
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 1;
+        }
+
+        .tagline {
+            font-size: 1.5rem;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 3rem;
+            font-weight: 300;
+            letter-spacing: 0.05em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto 3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-desc {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            display: inline-block;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        /* セクション */
+        .section {
+            padding: 5rem 2rem;
+            background: white;
+        }
+
+        .section-dark {
+            background: #2d3748;
+            color: white;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 3rem;
+            font-weight: 700;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* 使い方セクション */
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 3rem;
+            margin-top: 3rem;
+        }
+
+        .step {
+            text-align: center;
+        }
+
+        .step-number {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0 auto 1.5rem;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .step-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #2d3748;
+        }
+
+        .step-desc {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* フッター */
+        .footer {
+            background: #1a202c;
+            color: rgba(255, 255, 255, 0.8);
+            padding: 3rem 2rem 2rem;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+
+        .footer-link:hover {
+            color: white;
+        }
+
+        .footer-copyright {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* レスポンシブ */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 2.5rem;
+            }
+
+            .tagline {
+                font-size: 1.2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+
+        /* アニメーション */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero > * {
+            animation: fadeInUp 0.8s ease-out backwards;
+        }
+
+        .logo { animation-delay: 0.1s; }
+        .tagline { animation-delay: 0.3s; }
+        .features { animation-delay: 0.5s; }
+        .cta-buttons { animation-delay: 0.7s; }
+    </style>
+</head>
+<body>
+    <!-- ヒーローセクション -->
+    <section class="hero">
+        <!-- 地球儀キャンバス -->
+        <canvas id="globe-canvas"></canvas>
+
+        <div class="hero-content">
+            <h1 class="logo">EchoChat</h1>
+            <p class="tagline">あなたの言葉が、世界のどこかに届く</p>
+
+            <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🎭</div>
+                <h3 class="feature-title">完全匿名</h3>
+                <p class="feature-desc">登録不要、個人情報収集なし。安心して本音を語れます。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🗺️</div>
+                <h3 class="feature-title">世界中に投稿</h3>
+                <p class="feature-desc">地図上のどこにでもメッセージを残せます。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⏰</div>
+                <h3 class="feature-title">24時間で消滅</h3>
+                <p class="feature-desc">すべてのメッセージは24時間後に自動削除。儚い出会いを楽しもう。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h3 class="feature-title">リアルタイムチャット</h3>
+                <p class="feature-desc">気になるEchoからチャットルームに参加できます。</p>
+            </div>
+        </div>
+
+            <div class="cta-buttons">
+                <a href="#how-to-use" class="btn btn-primary">使い方を見る</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- 使い方セクション -->
+    <section class="section" id="how-to-use">
+        <div class="container">
+            <h2 class="section-title">3ステップで始める</h2>
+            <p style="text-align: center; color: #666; margin-bottom: 3rem; font-size: 1.1rem;">
+                登録不要。アプリを開いた瞬間から、世界中の人と繋がれます。
+            </p>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3 class="step-title">世界のEchoを発見</h3>
+                    <p class="step-desc">東京、ニューヨーク、パリ...世界中の誰かが今この瞬間に残した言葉。地図をスワイプして、未知の出会いを探索しよう。</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3 class="step-title">あなたのEchoを投稿</h3>
+                    <p class="step-desc">今の気持ちを140文字で、地図上の好きな場所に。24時間で消える儚い足跡だから、誰にも言えなかった本音を吐き出せる。</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3 class="step-title">出会いを楽しむ</h3>
+                    <p class="step-desc">共感したEchoにいいね。チャットで会話を始めよう。完全匿名だから本音で語り合える。24時間限定の特別な繋がり。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- EchoChatの特徴 -->
+    <section class="section section-dark">
+        <div class="container">
+            <h2 class="section-title">EchoChatの特徴</h2>
+            <div style="max-width: 800px; margin: 0 auto;">
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: white;">完全匿名の自由</h3>
+                    <p style="color: rgba(255, 255, 255, 0.9); line-height: 1.8; font-size: 1.05rem;">
+                        登録不要、個人情報の収集なし。ランダムに生成される動物の名前だけが、あなたの一時的なアイデンティティ。
+                        SNSの「いいね」やフォロワー数を気にする必要はありません。ただ、今の気持ちを素直に言葉にするだけ。
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: white;">24時間で消える儚さ</h3>
+                    <p style="color: rgba(255, 255, 255, 0.9); line-height: 1.8; font-size: 1.05rem;">
+                        すべての投稿は24時間後に完全削除。デジタルタトゥーの心配なし。
+                        今この瞬間だけを生きる場所だから、普段は言えない本音を吐き出せる。一期一会の出会いを、今だけ楽しんで。
+                    </p>
+                </div>
+
+                <div style="margin-bottom: 3rem;">
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: white;">世界中どこにでも</h3>
+                    <p style="color: rgba(255, 255, 255, 0.9); line-height: 1.8; font-size: 1.05rem;">
+                        東京のカフェ、ニューヨークの夜景、パリの街角...地図上のどこにでもメッセージを残せます。
+                        あなたの言葉が、遠く離れた誰かの心に届くかもしれない。地球上のあらゆる場所が、繋がりのキャンバスに。
+                    </p>
+                </div>
+
+                <div>
+                    <h3 style="font-size: 1.5rem; margin-bottom: 1rem; color: white;">通知のない静寂</h3>
+                    <p style="color: rgba(255, 255, 255, 0.9); line-height: 1.8; font-size: 1.05rem;">
+                        プッシュ通知なし。「いいね」を催促されることも、返信を急かされることもありません。
+                        見たいときに見る、話したいときに話す。あなたが主導権を握る、新しいコミュニケーション。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 誰のためのアプリか -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">こんな方におすすめ</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;">
+                <div style="padding: 2rem; background: #f7fafc; border-radius: 12px;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #2d3748;">本音を吐き出したい</h3>
+                    <p style="color: #4a5568; line-height: 1.8;">
+                        SNSでは言えない本音、心の奥底にある想い。完全匿名で24時間で消えるから、素直な気持ちを言葉にできる。
+                    </p>
+                </div>
+
+                <div style="padding: 2rem; background: #f7fafc; border-radius: 12px;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #2d3748;">新しい出会いが欲しい</h3>
+                    <p style="color: #4a5568; line-height: 1.8;">
+                        世界中の見知らぬ誰かと、偶然の出会いを。匿名だから先入観なし。24時間限定だから、特別な繋がりを感じられる。
+                    </p>
+                </div>
+
+                <div style="padding: 2rem; background: #f7fafc; border-radius: 12px;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #2d3748;">SNS疲れを感じている</h3>
+                    <p style="color: #4a5568; line-height: 1.8;">
+                        「いいね」の数、フォロワー数、既読無視...EchoChatには通知もプレッシャーもない。ただ、自由に言葉を交わすだけ。
+                    </p>
+                </div>
+
+                <div style="padding: 2rem; background: #f7fafc; border-radius: 12px;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #2d3748;">旅の思い出を残したい</h3>
+                    <p style="color: #4a5568; line-height: 1.8;">
+                        訪れた場所に、その瞬間の気持ちをメッセージとして。地図上のあらゆる場所が、記憶と感情を刻むキャンバスに。
+                    </p>
+                </div>
+
+                <div style="padding: 2rem; background: #f7fafc; border-radius: 12px;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #2d3748;">孤独を感じている</h3>
+                    <p style="color: #4a5568; line-height: 1.8;">
+                        誰かと繋がりたいけど、深く関わるのは重い。適度な距離感で、世界中の誰かと一時的な繋がりを楽しめる。
+                    </p>
+                </div>
+
+                <div style="padding: 2rem; background: #f7fafc; border-radius: 12px;">
+                    <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: #2d3748;">今この瞬間を大切にしたい</h3>
+                    <p style="color: #4a5568; line-height: 1.8;">
+                        過去にも未来にも囚われず、今この瞬間を生きる。24時間で消えるから、今の気持ちに正直になれる。
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- フッター -->
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="privacy.html" class="footer-link">プライバシーポリシー</a>
+            <a href="terms.html" class="footer-link">利用規約</a>
+        </div>
+        <p class="footer-copyright">&copy; 2025 EchoChat. All rights reserved.</p>
+    </footer>
+
+    <script>
+        // 地球儀の初期化
+        const canvas = document.getElementById('globe-canvas');
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
+            alpha: true,
+            antialias: true
+        });
+
+        // キャンバスサイズの設定
+        const globeSize = Math.min(window.innerWidth * 0.6, 600);
+        renderer.setSize(globeSize, globeSize);
+        camera.position.z = 3;
+
+        // 地球儀の作成
+        const geometry = new THREE.SphereGeometry(1, 64, 64);
+        const material = new THREE.MeshPhongMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.8,
+            wireframe: false,
+            emissive: 0x667eea,
+            emissiveIntensity: 0.2
+        });
+        const globe = new THREE.Mesh(geometry, material);
+        scene.add(globe);
+
+        // ワイヤーフレーム追加
+        const wireframeGeometry = new THREE.SphereGeometry(1.01, 32, 32);
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+            color: 0xffffff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.3
+        });
+        const wireframe = new THREE.Mesh(wireframeGeometry, wireframeMaterial);
+        scene.add(wireframe);
+
+        // ライト追加
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 3, 5);
+        scene.add(directionalLight);
+
+        // Echoピンを生成する関数
+        function createEchoPin(lat, lon, color) {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
+
+            const x = -1.05 * Math.sin(phi) * Math.cos(theta);
+            const y = 1.05 * Math.cos(phi);
+            const z = 1.05 * Math.sin(phi) * Math.sin(theta);
+
+            const pinGeometry = new THREE.SphereGeometry(0.02, 16, 16);
+            const pinMaterial = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.9
+            });
+            const pin = new THREE.Mesh(pinGeometry, pinMaterial);
+            pin.position.set(x, y, z);
+
+            // グローエフェクト
+            const glowGeometry = new THREE.SphereGeometry(0.04, 16, 16);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.3
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            glow.position.set(x, y, z);
+
+            return { pin, glow };
+        }
+
+        // ランダムにEchoピンを配置
+        const echoPins = [];
+        const echoColors = [0x88D8B0, 0xFFCC5C, 0xFF6B6B, 0x6B5B95, 0x90EE90];
+
+        for (let i = 0; i < 30; i++) {
+            const lat = (Math.random() - 0.5) * 180;
+            const lon = (Math.random() - 0.5) * 360;
+            const color = echoColors[Math.floor(Math.random() * echoColors.length)];
+            const { pin, glow } = createEchoPin(lat, lon, color);
+
+            scene.add(pin);
+            scene.add(glow);
+            echoPins.push({ pin, glow, phase: Math.random() * Math.PI * 2 });
+        }
+
+        // アニメーション
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.005;
+
+            // 地球をゆっくり回転
+            globe.rotation.y += 0.001;
+            wireframe.rotation.y += 0.001;
+
+            // Echoピンを回転させる
+            echoPins.forEach((echoObj, index) => {
+                echoObj.pin.parent.rotation.y = globe.rotation.y;
+                echoObj.glow.parent.rotation.y = globe.rotation.y;
+
+                // パルスアニメーション
+                const scale = 1 + Math.sin(time * 2 + echoObj.phase) * 0.3;
+                echoObj.glow.scale.set(scale, scale, scale);
+                echoObj.glow.material.opacity = 0.2 + Math.sin(time * 2 + echoObj.phase) * 0.2;
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        animate();
+
+        // リサイズ対応
+        window.addEventListener('resize', () => {
+            const newSize = Math.min(window.innerWidth * 0.6, 600);
+            renderer.setSize(newSize, newSize);
+        });
+    </script>
+</body>
+</html>
